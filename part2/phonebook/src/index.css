@@ -1,0 +1,41 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.1rem;
+}
+
+.success {
+    color: green;
+    background-color: wheat;
+    font-size: 1.5rem;
+    padding: 1rem;
+    border: 1px solid black;
+    text-align: center;
+}
+
+.error {
+    color: red;
+    background-color: wheat;
+    font-size: 1.5rem;
+    padding: 1rem;
+    border: 1px solid black;
+    text-align: center;
+}
+
+.box {
+    margin-left: 2rem;
+    margin-top: 2rem;
+}
+
+.heading {
+    font-size: 2rem;
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+td{
+    padding-right: 1.5rem;
+    padding-bottom: 0.3rem;
+}
