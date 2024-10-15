@@ -13,67 +13,56 @@ const App = () => {
   const [message, setMessage] = useState(null)
 
   useEffect(() => {
-    personServices
-      .getAllContacts()
-      .then(data => {
-        setPersons(data)
-      })
-  }, [])
+    async function fetchData() {
+      const data = await personServices.getAllContacts()
+      setPersons(data)
+    }
+    fetchData()
+  }, [setPersons])
 
-  const onAdd = (e) => {
+  const onAdd = async (e) => {
     e.preventDefault()
     const cleanedName = newName.trim()
     const cleanedNumber = newNumber.trim();
 
-    if (!cleanedName) {
-      alert('Name cannot be empty')
-      return
-    }
+    if (!cleanedName) return setMessage({
+      type: "error",
+      text: "Name cannot be empty"
+    })
 
     const phoneRegex = /^\+?(\d{1,3})?[-\s]?\d{10,15}$/
-    if (!phoneRegex.test(cleanedNumber)) {
-      alert("Please enter a valid phone number.");
-      return;
-    }
+    if (!phoneRegex.test(cleanedNumber)) return setMessage({
+      type: "error",
+      text: "Please enter a valid phone number"
+    })
 
     const isDuplicateNumber = persons.some(person => person.number === cleanedNumber)
     const isDuplicateName = persons.some(person => person.name === cleanedName)
 
-    if (isDuplicateNumber) {
-      alert(`${newNumber} is already added to phonebook`)
-      return
-    }
+    if (isDuplicateNumber) return setMessage({
+      type: "error",
+      text: `${newNumber} is already added to phonebook`
+    })
 
     if (isDuplicateName && window.confirm(`${newName} is already added to phonebook, replace the old number with a new one ?`)) {
-      const contact = persons.find(p => p.name === cleanedName)
 
-      personServices
-        .getContact(contact.id)
-        .then(() => {
-          const updatedContact = { ...contact, number: cleanedNumber }
-          personServices
-            .updateContact(contact.id, updatedContact)
-            .then(data => {
-              const updatedPersons = persons.filter(p => p.id !== contact.id)
-              setPersons(updatedPersons.concat(data))
-              setNewName('')
-              setNewNumber('')
-              setMessage({
-                text: `${contact.name} was sucessfully updated from [${contact.number}] to [${updatedContact.number}]`,
-                type: 'success'
-              })
-              setTimeout(() => setMessage(null), 5000)
-            })
+      const contact = persons.find(p => p.name === cleanedName)
+      try {
+        const updatedContact = { ...contact, number: cleanedNumber }        
+        const updatedPersons = await personServices.updateContact(contact.id, updatedContact)
+        setPersons(updatedPersons)
+        setMessage({
+          text: `${cleanedName} has been updated to [${cleanedNumber}] successfully.`,
+          type: 'success'
         })
-        .catch(() => {
-          const updatedPersons = persons.filter(p => p.id !== contact.id)
-          setPersons(updatedPersons)
-          setMessage({ 
-            text: `${contact.name} has already been deleted.`, 
-            type: 'error' 
-          })
-          setTimeout(() => setMessage(null), 5000)
+      } 
+      catch (error) {
+        setMessage({
+          text: `${contact.name} [${contact.number}] has already been deleted.`,
+          type: 'error'
         })
+        setTimeout(() => setMessage(null), 5000);
+      }
 
       return
     }
@@ -83,40 +72,37 @@ const App = () => {
       number: cleanedNumber
     }
 
-    personServices
-      .create(newPerson)
-      .then(data => {
-        setPersons(persons.concat(data))
-        setNewName('')
-        setNewNumber('')
-        setMessage({
-          text: `Added ${newPerson.name} [${newPerson.number}]`,
-          type: 'success'
-        })
-        setTimeout(() => setMessage(null), 5000)
-      })
+    const newContact = await personServices.create(newPerson) 
+    setPersons(persons.concat(newContact))
+    setNewName('')
+    setNewNumber('')
+    setMessage({
+      text: `Added ${newPerson.name} [${newPerson.number}]`,
+      type: 'success'
+    })
+    setTimeout(() => setMessage(null), 5000)
   };
 
-  const onDelete = (id) => {
+  const onDelete = async (id) => {
     const contact = persons.find(p => p.id === id)
-    if (window.confirm(`Delete ${contact.name} [${contact.number}] ?`)) {
-      personServices
-        .deleteContact(id)
-        .then(data => {
-          const updatedPersons = persons.filter(p => p.id !== id)
-          setPersons(updatedPersons)
-          setMessage(`Deleted ${data.name} [${data.number}]`)
-          setTimeout(() => setMessage(null), 5000)
-        })
-        .catch(err => {
-          const updatedPersons = persons.filter(p => p.id !== id)
-          setPersons(updatedPersons)
-          setMessage({ 
-            text: `${contact.name} has already been deleted.`, 
-            type: 'error' 
-          })
-          setTimeout(() => setMessage(null), 5000);
-        })
+    if (!window.confirm(`Delete ${contact.name} [${contact.number}] ?`)) return
+
+    const updatedPersons = persons.filter(p => p.id != id)
+    setPersons(updatedPersons)
+    try {
+      const deleteContact = await personServices.deleteContact(id)
+      setMessage({
+        text: deleteContact.message,
+        type: 'success'
+      })
+      setTimeout(() => setMessage(null), 5000)
+    }
+    catch (error) {
+      setMessage({
+        text: `${contact.name} [${contact.number}] has already been deleted.`,
+        type: 'error'
+      })
+      setTimeout(() => setMessage(null), 5000);
     }
   }
 

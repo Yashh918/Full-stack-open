@@ -1,7 +1,9 @@
-POST http://localhost:3001/api/persons HTTP/1.1
+# POST http://localhost:3001/api/persons HTTP/1.1
+
+POST https://phonebook-backend-cnmj.onrender.com/api/persons HTTP/1.1
 Content-Type: application/json
 
 {
-    "name": "yasahakh",
-    "number": "917263931314"
+    "name": "yashh",
+    "number": "4916482941"
 }

@@ -5,6 +5,7 @@ const app = express()
 
 app.use(json())
 app.use(cors())
+app.use(express.static('dist'))
 
 morgan.token('data', (req, res)=> {
     return JSON.stringify(req.body)
@@ -35,12 +36,10 @@ let persons = [
     }
 ]
 
-app.get('/', (request, response) => {
-    response.send('<h1> Hello there </h1>')
-})
-
 app.get('/api/persons', (request, response) => {
-    response.json(persons)
+    response
+        .status(200)
+        .json(persons)
 })
 
 app.get('/api/persons/:personId', (request, response) => {
@@ -48,10 +47,14 @@ app.get('/api/persons/:personId', (request, response) => {
     const person = persons.find(p => p.id === id)
 
     if (!person) {
-        return response.status(404).end()
+        return response
+            .status(404)
+            .json({error: "Contact not found"})
     }
 
-    response.json(person)
+    response
+        .status(200)
+        .json(person)
 })
 
 app.post('/api/persons', (request, response) => {
@@ -63,31 +66,51 @@ app.post('/api/persons', (request, response) => {
             .json({ error: "name or number cannot be empty" });
     }
 
-    if (persons.some(p => p.name === name.trim())) {
-        return response
-            .status(400)
-            .json({ error: "name must be unique" });
-    }
-
     const newPerson = {
-        id: Math.floor(Math.random() * 999999),
+        id: String(Math.floor(Math.random() * 999999)),
         name: name.trim(),
         number: number.trim()
     }
 
     persons = persons.concat(newPerson)
-    response.json(newPerson)
+    response
+        .status(200)
+        .json(newPerson)
+})
+
+app.put('/api/persons/:personId', (request, response) => {
+    const id = request.params.personId
+    const { name, number } = request.body
+
+    const person = persons.find(p => p.id === id)
+    if (!person) {
+        return response
+            .status(404)
+            .json({error: "Contact not found"})
+    }
+
+    persons.forEach((person, key) => {
+        if(person.name === name) person.number=number
+    })
+
+    response
+        .status(200)
+        .json(persons)
 })
 
 app.delete('/api/persons/:personId', (request, response) => {
     const id = request.params.personId
     const person = persons.find(p => p.id === id)
     if (!person) {
-        return response.status(404).end()
+        return response
+            .status(404)
+            .json({error: "Contact not found"})
     }
 
     persons = persons.filter(p => p.id !== id)
-    response.status(204).end()
+    response
+        .status(200)
+        .json({ message: `${person.name} [${person.number}] has been deleted successfully` })
 })
 
 app.get('/info', (request, response) => {
@@ -99,7 +122,7 @@ app.get('/info', (request, response) => {
     )
 })
 
-const port = 3001
+const port = process.env.PORT || 3001
 app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
 })
