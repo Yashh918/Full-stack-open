@@ -57,6 +57,8 @@ const App = () => {
         })
       } 
       catch (error) {
+        const updatedPersons = persons.filter(p => p.name !== contact.name)
+        setPersons(updatedPersons)
         setMessage({
           text: `${contact.name} [${contact.number}] has already been deleted.`,
           type: 'error'
