@@ -30,7 +30,7 @@ const App = () => {
       text: "Name cannot be empty"
     })
 
-    const phoneRegex = /^\+?(\d{1,3})?[-\s]?\d{10,15}$/
+    const phoneRegex = /^\+?(\d{2,3})?[-\s]?\d{6,15}$/
     if (!phoneRegex.test(cleanedNumber)) return setMessage({
       type: "error",
       text: "Please enter a valid phone number"
@@ -48,15 +48,15 @@ const App = () => {
 
       const contact = persons.find(p => p.name === cleanedName)
       try {
-        const updatedContact = { ...contact, number: cleanedNumber }        
+        const updatedContact = { ...contact, number: cleanedNumber }
         const updatedPersons = await personServices.updateContact(contact.id, updatedContact)
         setPersons(updatedPersons)
         setMessage({
           text: `${cleanedName} has been updated to [${cleanedNumber}] successfully.`,
           type: 'success'
         })
-      } 
-      catch (error) {
+      }
+      catch {
         const updatedPersons = persons.filter(p => p.name !== contact.name)
         setPersons(updatedPersons)
         setMessage({
@@ -74,15 +74,23 @@ const App = () => {
       number: cleanedNumber
     }
 
-    const newContact = await personServices.create(newPerson) 
-    setPersons(persons.concat(newContact))
-    setNewName('')
-    setNewNumber('')
-    setMessage({
-      text: `Added ${newPerson.name} [${newPerson.number}]`,
-      type: 'success'
-    })
-    setTimeout(() => setMessage(null), 5000)
+    try {
+      const newContact = await personServices.create(newPerson)
+      setPersons(persons.concat(newContact))
+      setNewName('')
+      setNewNumber('')
+      setMessage({
+        text: `Added ${newPerson.name} [${newPerson.number}]`,
+        type: 'success'
+      })
+      setTimeout(() => setMessage(null), 5000)
+    } catch (error) {
+      setMessage({
+        text: error.response.data.error,
+        type: 'error'
+      })
+      setTimeout(() => setMessage(null), 5000)
+    }
   };
 
   const onDelete = async (id) => {
@@ -99,7 +107,7 @@ const App = () => {
       })
       setTimeout(() => setMessage(null), 5000)
     }
-    catch (error) {
+    catch {
       setMessage({
         text: `${contact.name} [${contact.number}] has already been deleted.`,
         type: 'error'
